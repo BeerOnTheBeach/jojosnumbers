@@ -8,8 +8,8 @@
     <title>Document</title>
 </head>
 <body>
-<a href="statistics/durak.index">aenderung</a>
-<a href="statistics/ultimate.index"></a>
+<a href="statistics/durak/durak.html">durak</a>
+<a href="statistics/ultimate/ultimate.html">ultimate</a>
 </body>
 </html>
 
