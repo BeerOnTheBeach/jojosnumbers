@@ -1,0 +1,793 @@
+---
+title: "Durak"
+author: "Toni Anusic"
+date: "12.07.2020"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+# R Pakete laden
+
+```{r  echo=F, warning=F, message=F, warning=F, message=FALSE}
+library(ggplot2)
+library(tidyr)
+library(reshape)
+library(reshape2)
+library(plyr)
+#library(tidyverse)
+library(dplyr)
+library(DT)
+library("markovchain")
+library(expm)
+library(markovchain)
+library("diagram")
+library("pracma")
+library("plotly")
+```
+
+# Datensatz laden & formatieren
+
+```{r echo=F,  warning=F, message=F,warning=FALSE}
+df=read.csv("C:/Users/User/Desktop/Ordner/durak/durak.csv", sep=';', header = T)
+df=df[,1:14] 
+colnames(df)[c(1,2,14)]=c("Datum","Runde","Gruppe")
+
+df$Gruppe= rowSums(!is.na(df[c(-1,-2)])) # Gruppe ist numerische Variable mit Anzahl der Spieler
+df[is.na(df)] <- -9 # setze alls NA's auf -9
+
+df$Don=as.factor(df$Don)
+df$Flo=as.factor(df$Flo)
+df$Gero=as.factor(df$Gero)
+df$Marco=as.factor(df$Marco)
+df$Toni=as.factor(df$Toni)
+df$Juergen=as.factor(df$Juergen)
+df$Frind=as.factor(df$Frind)
+df$Majo=as.factor(df$Majo)
+df$Domi=as.factor(df$Domi)
+df$Elias=as.factor(df$Elias)
+df$Tobi=as.factor(df$Tobi)
+
+datatable(df)%>%
+    formatStyle(
+        names(df)[3:13],
+        color = styleInterval(cuts = c(-9,0,1), values = c("grey", "black", "red","cyan")),
+        fontWeight = "bold" )
+```
+
+
+```{r   echo=F,warning=F, message=F}
+dfl <- gather(df, ID, Ergebnis, Don:Tobi, factor_key=TRUE)
+
+## Looses auf Spieleranzahl definieren
+j=1
+while(j < length(dfl$Runde)+1){
+  if(dfl$Gruppe[j]==6 && dfl$Ergebnis[j]==1){dfl$Ergebnis[j]=1.6}      #6er
+  else if(dfl$Gruppe[j]==5 && dfl$Ergebnis[j]==1){dfl$Ergebnis[j]=1.5} #5er
+  else if(dfl$Gruppe[j]==4 && dfl$Ergebnis[j]==1){dfl$Ergebnis[j]=1.4} #4er
+  else{dfl$Ergebnis[j]=dfl$Ergebnis[j]}                                #3er
+  j=j+1
+}
+
+## Wins auf Spieleranzahl definieren
+j=1
+while(j < length(dfl$Runde)+1){
+  if(dfl$Gruppe[j]==6 && dfl$Ergebnis[j]==0){dfl$Ergebnis[j]=0.6}      #6er
+  else if(dfl$Gruppe[j]==5 && dfl$Ergebnis[j]==0){dfl$Ergebnis[j]=0.5} #5er
+  else if(dfl$Gruppe[j]==4 && dfl$Ergebnis[j]==0){dfl$Ergebnis[j]=0.4} #4er
+  else{dfl$Ergebnis[j]=dfl$Ergebnis[j]}                                #3er
+  j=j+1
+}
+
+## Draws auf Spieleranzahl definieren
+j=1
+while(j < length(dfl$Runde)+1){
+  if(dfl$Gruppe[j]==6 && dfl$Ergebnis[j]==2){dfl$Ergebnis[j]=2.6}
+  else if(dfl$Gruppe[j]==5 && dfl$Ergebnis[j]==2){dfl$Ergebnis[j]=2.5}
+  else if(dfl$Gruppe[j]==4 && dfl$Ergebnis[j]==2){dfl$Ergebnis[j]=2.4}
+  else{dfl$Ergebnis[j]=dfl$Ergebnis[j]}
+  j=j+1
+}
+
+dfl$Ergebnis=as.factor(dfl$Ergebnis) #Ergebnis in Faktor umwandeln
+dfl$Ergebnis =revalue(dfl$Ergebnis, 
+                      c("-9"="N.A.",
+                        "0.6"="Win-6er","0.5"="Win-5er","0.4"="Win-4er","0"="Win-3er",
+                        "1.6"="Loose-6er","1.5"="Loose-5er","1.4"="Loose-4er","1"="Loose-3er",
+                        "2.6"="Draw-6er","2.5"="Draw-5er","2.4"="Draw-4er","2"="Draw-3er"))
+```
+
+
+
+
+
+
+
+# Verteilung der Ergebnisse pro Person
+
+Für den Anfang soll erstmal festgestellt werden, wie oft jemand welches Ergebnis erzielt hat. Vor allem die Anzahl der Runden wo man **nicht** dabei war (dargestellt durch **N.A.**) ist wichtig, da jeder eine unterschiedliche Anzahl an gespielten Runden hat und dementsprechend das Loose-ratio personenbezogen berechnet werden muss. Aber zunächst zur Verteilung der Ergebnisse:
+
+```{r  echo=F, warning=F, message=F, warning=F, message=F}
+ntab=table(dfl$Ergebnis,dfl$ID) #erstelle Gesamttabelle
+ntab=ntab[-1,] #lösche NA Spalte
+
+m=data.frame(matrix(ntab, ncol=dim(ntab)[2])) # wandle Matrix in Dataframe um
+colnames(m)=colnames(ntab) # Spalten umbennen
+m$Type=rownames(ntab) # Zeilen Umbennen
+m=m[,c(dim(m)[2],1:(dim(m)[2]-1))] # Umordnung der Spalten
+m
+
+df_3er=aggregate(.~ Type, data = m[c(1,5,9),], FUN = sum) # 3er extrahieren
+df_4er=aggregate(.~ Type, data = m[c(2,6,10),], FUN = sum) # 4er extrahieren
+df_5er=aggregate(.~ Type, data = m[c(3,7,11),], FUN = sum) # 5er extrahieren
+df_6er=aggregate(.~ Type, data = m[c(4,8),], FUN = sum) # Draw im 6er noch nicht vorhanden, deswegen kein 3rd Index
+
+n_3=colSums(Filter(is.numeric, df_3er)) # Anzahl Runden im 3er
+n_4=colSums(Filter(is.numeric, df_4er)) # Anzahl Runden im 4er
+n_5=colSums(Filter(is.numeric, df_5er)) # Anzahl Runden im 5er
+n_6=colSums(Filter(is.numeric, df_6er)) # Anzahl Runden im 6er
+n_gesamt=colSums(Filter(is.numeric, m)) # Anzahl Runden gesamt
+n=rbind(n_3,n_4,n_5,n_6,n_gesamt)
+
+df_3er_r=rbind(df_3er[,2:dim(df_3er)[2]],n_3)
+df_3er_r=round(data.frame(lapply(df_3er_r, function(X) X/X[4])),3)
+df_3er_r$Type=c("Draw-3er","Loose-3er","Win-3er","N_3")
+df_3er_r=df_3er_r[-c(4),]
+
+df_4er_r=rbind(df_4er[,2:dim(df_4er)[2]],n_4)
+df_4er_r=round(data.frame(lapply(df_4er_r, function(X) X/X[4])),3)
+df_4er_r$Type=c("Draw-4er","Loose-4er","Win-4er","N_3")
+df_4er_r=df_4er_r[-c(4),]
+
+df_5er_r=rbind(df_5er[,2:dim(df_5er)[2]],n_5)
+df_5er_r=round(data.frame(lapply(df_5er_r, function(X) X/X[4])),3)
+df_5er_r$Type=c("Draw-5er","Loose-5er","Win-5er","N_3")
+df_5er_r=df_5er_r[-c(4),]
+
+df_6er_r=rbind(df_6er[,2:dim(df_6er)[2]],n_6)
+df_6er_r=round(data.frame(lapply(df_6er_r, function(X) X/X[3])),3) #Hinweis: Draw noch nicht vorhanden deswegen Index-1
+#df_6er_r$Type=c("Draw-6er","Loose-6er","Win-6er","N_3")
+df_6er_r$Type=c("Loose-6er","Win-6er","N_3")
+df_6er_r=df_6er_r[-c(3),] # Hinweis: Draw noch nicht vorhanden deswegen Index -1
+
+df_r=rbind(df_3er_r,df_4er_r,df_5er_r,df_6er_r)
+df_r=df_r[,c(dim(df_r)[2],1:(dim(df_r)[2]-1))]
+df_r=df_r[-c(3,6,9,11),] #delete win ratio
+```
+
+```{r echo=F, message=F, warning=F}
+df_r_l <- gather(df_r, ID, Ergebnis, Don:Tobi, factor_key=TRUE) # in long format konvertieren
+df_r_l=df_r_l[complete.cases(df_r_l), ]
+
+p=ggplot(df_r_l, aes(x=ID, y=Ergebnis, color=Type,group=Type))+
+  geom_point()+
+  geom_line()+
+  theme_bw()+
+  xlab("")+
+  ylab("")+
+  scale_y_continuous(labels = scales::percent)
+ggplotly(p)
+```
+
+
+```{r echo=F}
+n_r=round(data.frame(lapply(data.frame(n), function(X) X/X[5])),3)
+n_total=rbind(n, n_r[-5,])
+rownames(n_total)=c(
+  "Anzahl_Spiele_3er_N","Anzahl_Spiele_4er_N","Anzahl_Spiele_5er_N","Anzahl_Spiele_6er_N","Anzahl_Spiele_Gesamt_N",
+  "Anzahl_Spiele_3er_%","Anzahl_Spiele_4er_%","Anzahl_Spiele_5er_%","Anzahl_Spiele_6er_%")
+n_total$Type=rownames(n_total)
+row.names(n_total)=NULL
+n_total=n_total[,c(dim(n_total)[2],1:(dim(n_total)[2]-1))] #umordnen der spalten
+n_total_l_N <- gather(n_total[1:5,], ID, Ergebnis, Don:Tobi, factor_key=TRUE) # in long format konvertieren
+n_total_l_r <- gather(n_total[6:9,], ID, Ergebnis, Don:Tobi, factor_key=TRUE) # in long format konvertieren
+
+p=ggplot(n_total_l_r, aes(x=ID, y=Ergebnis, color=Type,group=Type))+
+  geom_point()+
+  geom_line()+
+  xlab("")+
+  ylab("")+
+  theme_bw()+
+  scale_y_continuous(labels = scales::percent)
+ggplotly(p)
+
+p=ggplot(n_total_l_N, aes(x=ID, y=Ergebnis, color=Type,group=Type))+
+  geom_point()+
+  geom_line()+
+  theme_bw()+
+  xlab("")+
+  ylab("")+
+  geom_hline(yintercept = 1000, linetype="dashed")+
+  geom_hline(yintercept = 30, linetype="dashed")
+ggplotly(p)
+```
+
+
+# Chronologischer Verlauf
+
+## 6er
+
+```{r echo=F,  warning=F, message=F, warning=FALSE}
+dfl_6=dfl[dfl$Gruppe==6 & dfl$Ergebnis!="N.A.",]
+dfl_6$result=ifelse(dfl_6$Ergebnis=='Loose-6er',1,0)
+
+# subsette auf ID um die individuellen loose-ratios auszurechnen
+# TODO: Vorgehen mittels Funktionen einfacher zu machen, zu diesem Zeitpunkt ziemlich unelegant
+
+don_6=dfl_6[dfl_6$ID=="Don",]
+flo_6=dfl_6[dfl_6$ID=="Flo",]
+gero_6=dfl_6[dfl_6$ID=="Gero",]
+marco_6=dfl_6[dfl_6$ID=="Marco",]
+toni_6=dfl_6[dfl_6$ID=="Toni",]
+#juergen_6=dfl_6[dfl_6$ID=="Juergen", ] # < 30 spiele
+frind_6=dfl_6[dfl_6$ID=="Frind",]
+#majo_6=dfl_6[dfl_6$ID=="Majo",] # < 30 spiele
+#domi_6=dfl_6[dfl_6$ID=="Domi",] # < 30 spiele
+#elias_6=dfl_6[dfl_6$ID=="Elias",] # < 30 spiele
+#tobi_6=dfl_6[dfl_6$ID=="Tobi",] # < 30 spiele
+
+don_6$cum_result=cumsum(don_6$result) # kummuliere sukzessive das Ergebnis
+don_6$count=c(1:(dim(don_6)[1])) # definiere Spalte mit "Rundenanzahl"
+don_6$loose_ratio=round(don_6$cum_result/don_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+flo_6$cum_result=cumsum(flo_6$result) # kummuliere sukzessive das Ergebnis
+flo_6$count=c(1:(dim(flo_6)[1])) # definiere Spalte mit "Rundenanzahl"
+flo_6$loose_ratio=round(flo_6$cum_result/flo_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+gero_6$cum_result=cumsum(gero_6$result) # kummuliere sukzessive das Ergebnis
+gero_6$count=c(1:(dim(gero_6)[1])) # definiere Spalte mit "Rundenanzahl"
+gero_6$loose_ratio=round(gero_6$cum_result/gero_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+marco_6$cum_result=cumsum(marco_6$result) # kummuliere sukzessive das Ergebnis
+marco_6$count=c(1:(dim(marco_6)[1])) # definiere Spalte mit "Rundenanzahl"
+marco_6$loose_ratio=round(marco_6$cum_result/marco_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+toni_6$cum_result=cumsum(toni_6$result) # kummuliere sukzessive das Ergebnis
+toni_6$count=c(1:(dim(toni_6)[1])) # definiere Spalte mit "Rundenanzahl"
+toni_6$loose_ratio=round(toni_6$cum_result/toni_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+frind_6$cum_result=cumsum(frind_6$result) # kummuliere sukzessive das Ergebnis
+frind_6$count=c(1:(dim(frind_6)[1])) # definiere Spalte mit "Rundenanzahl"
+frind_6$loose_ratio=round(frind_6$cum_result/frind_6$count,3)*100 # berechne loose-ratio für jede Runde
+
+
+df_6=as.data.frame(rbind(don_6,flo_6,gero_6,marco_6,toni_6,frind_6))
+
+s=ggplot(df_6, aes(x=count, y=loose_ratio, color=ID))+
+  geom_line()+
+  ylab("loose-ratio %")+
+  geom_hline(yintercept = 16.7, linetype="dashed")+
+  theme_bw()+
+  theme(axis.title.x=element_blank())
+
+ggplotly(s)
+```
+
+## 5er
+
+```{r  echo=F, warning=F, message=F, warning=FALSE}
+dfl_5=dfl[dfl$Gruppe==5 & dfl$Ergebnis!="N.A.",]
+dfl_5$result=ifelse(dfl_5$Ergebnis=='Loose-5er',1,0)
+
+# subsette auf ID um die individuellen loose-ratios auszurechnen
+# TODO: Vorgehen mittels Funktionen einfacher zu machen, zu diesem Zeitpunkt ziemlich unelegant
+
+don_5=dfl_5[dfl_5$ID=="Don",]
+flo_5=dfl_5[dfl_5$ID=="Flo",]
+gero_5=dfl_5[dfl_5$ID=="Gero",]
+marco_5=dfl_5[dfl_5$ID=="Marco",]
+toni_5=dfl_5[dfl_5$ID=="Toni",]
+#juergen_5=dfl_5[dfl_5$ID=="Juergen", ] # < 30 spiele
+frind_5=dfl_5[dfl_5$ID=="Frind",]
+#majo_5=dfl_5[dfl_5$ID=="Majo",] # < 30 spiele
+#domi_5=dfl_5[dfl_5$ID=="Domi",] # < 30 spiele
+#elias_5=dfl_5[dfl_5$ID=="Elias",] # < 30 spiele
+#tobi_5=dfl_5[dfl_5$ID=="Tobi",] # < 30 spiele
+
+don_5$cum_result=cumsum(don_5$result) # kummuliere sukzessive das Ergebnis
+don_5$count=c(1:(dim(don_5)[1])) # definiere Spalte mit "Rundenanzahl"
+don_5$loose_ratio=round(don_5$cum_result/don_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+flo_5$cum_result=cumsum(flo_5$result) # kummuliere sukzessive das Ergebnis
+flo_5$count=c(1:(dim(flo_5)[1])) # definiere Spalte mit "Rundenanzahl"
+flo_5$loose_ratio=round(flo_5$cum_result/flo_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+gero_5$cum_result=cumsum(gero_5$result) # kummuliere sukzessive das Ergebnis
+gero_5$count=c(1:(dim(gero_5)[1])) # definiere Spalte mit "Rundenanzahl"
+gero_5$loose_ratio=round(gero_5$cum_result/gero_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+marco_5$cum_result=cumsum(marco_5$result) # kummuliere sukzessive das Ergebnis
+marco_5$count=c(1:(dim(marco_5)[1])) # definiere Spalte mit "Rundenanzahl"
+marco_5$loose_ratio=round(marco_5$cum_result/marco_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+toni_5$cum_result=cumsum(toni_5$result) # kummuliere sukzessive das Ergebnis
+toni_5$count=c(1:(dim(toni_5)[1])) # definiere Spalte mit "Rundenanzahl"
+toni_5$loose_ratio=round(toni_5$cum_result/toni_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+frind_5$cum_result=cumsum(frind_5$result) # kummuliere sukzessive das Ergebnis
+frind_5$count=c(1:(dim(frind_5)[1])) # definiere Spalte mit "Rundenanzahl"
+frind_5$loose_ratio=round(frind_5$cum_result/frind_5$count,3)*100 # berechne loose-ratio für jede Runde
+
+
+
+df_5=as.data.frame(rbind(don_5,flo_5,gero_5,marco_5,toni_5,frind_5))
+
+s=ggplot(df_5, aes(x=count, y=loose_ratio, color=ID))+
+  geom_line()+
+  ylab("loose-ratio %")+
+  geom_hline(yintercept = 20, linetype="dashed")+
+  theme_bw()+
+  theme(axis.title.x=element_blank())+
+  scale_y_continuous(limits=c(0,100),breaks=c(seq(0,100,by=10)))
+
+ggplotly(s)
+
+```
+
+## 4er
+
+```{r echo=F,  warning=F, message=F, warning=FALSE}
+dfl_4=dfl[dfl$Gruppe==4 & dfl$Ergebnis!="N.A.",]
+dfl_4$result=ifelse(dfl_4$Ergebnis=='Loose-4er',1,0)
+
+# subsette auf ID um die individuellen loose-ratios auszurechnen
+# TODO: Vorgehen mittels Funktionen einfacher zu machen, zu diesem Zeitpunkt ziemlich unelegant
+
+don_4=dfl_4[dfl_4$ID=="Don",]
+flo_4=dfl_4[dfl_4$ID=="Flo",]
+gero_4=dfl_4[dfl_4$ID=="Gero",]
+marco_4=dfl_4[dfl_4$ID=="Marco",]
+toni_4=dfl_4[dfl_4$ID=="Toni",]
+#juergen_4=dfl_4[dfl_4$ID=="Juergen",] # < 30 spiele
+frind_4=dfl_4[dfl_4$ID=="Frind",]
+#majo_4=dfl_4[dfl_4$ID=="Majo",] # < 30 spiele
+domi_4=dfl_4[dfl_4$ID=="Domi",] # < 30 spiele
+#elias_4=dfl_4[dfl_4$ID=="Elias",] # < 30 spiele
+#tobi_4=dfl_4[dfl_4$ID=="Tobi",] # < 30 spiele
+
+don_4$cum_result=cumsum(don_4$result) # kummuliere sukzessive das Ergebnis
+don_4$count=c(1:(dim(don_4)[1])) # definiere Spalte mit "Rundenanzahl"
+don_4$loose_ratio=round(don_4$cum_result/don_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+flo_4$cum_result=cumsum(flo_4$result) # kummuliere sukzessive das Ergebnis
+flo_4$count=c(1:(dim(flo_4)[1])) # definiere Spalte mit "Rundenanzahl"
+flo_4$loose_ratio=round(flo_4$cum_result/flo_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+gero_4$cum_result=cumsum(gero_4$result) # kummuliere sukzessive das Ergebnis
+gero_4$count=c(1:(dim(gero_4)[1])) # definiere Spalte mit "Rundenanzahl"
+gero_4$loose_ratio=round(gero_4$cum_result/gero_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+marco_4$cum_result=cumsum(marco_4$result) # kummuliere sukzessive das Ergebnis
+marco_4$count=c(1:(dim(marco_4)[1])) # definiere Spalte mit "Rundenanzahl"
+marco_4$loose_ratio=round(marco_4$cum_result/marco_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+toni_4$cum_result=cumsum(toni_4$result) # kummuliere sukzessive das Ergebnis
+toni_4$count=c(1:(dim(toni_4)[1])) # definiere Spalte mit "Rundenanzahl"
+toni_4$loose_ratio=round(toni_4$cum_result/toni_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+frind_4$cum_result=cumsum(frind_4$result) # kummuliere sukzessive das Ergebnis
+frind_4$count=c(1:(dim(frind_4)[1])) # definiere Spalte mit "Rundenanzahl"
+frind_4$loose_ratio=round(frind_4$cum_result/frind_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+domi_4$cum_result=cumsum(domi_4$result) # kummuliere sukzessive das Ergebnis
+domi_4$count=c(1:(dim(domi_4)[1])) # definiere Spalte mit "Rundenanzahl"
+domi_4$loose_ratio=round(domi_4$cum_result/domi_4$count,3)*100 # berechne loose-ratio für jede Runde
+
+df_4=as.data.frame(rbind(don_4,flo_4,gero_4,marco_4,toni_4,frind_4, domi_4))
+
+s=ggplot(df_4, aes(x=count, y=loose_ratio, color=ID))+
+  geom_line()+
+  ylab("loose-ratio %")+
+  geom_hline(yintercept = 25, linetype="dashed")+
+  theme_bw()+
+  theme(axis.title.x=element_blank())+
+  scale_y_continuous(limits=c(0,100),breaks=c(seq(0,100,by=10)))
+
+ggplotly(s)
+
+```
+
+Note: Ungewöhnlicher Sprung beim Domi, was vermutlich mit dem sortierten Datensatz zusammenhängt.
+
+## 3er
+
+```{r echo=F,  warning=F, message=F, warning=FALSE}
+dfl_3=dfl[dfl$Gruppe==3 & dfl$Ergebnis!="N.A.",]
+dfl_3$result=ifelse(dfl_3$Ergebnis=='Loose-3er',1,0)
+
+# subsette auf ID um die individuellen loose-ratios auszurechnen
+# TODO: Vorgehen mittels Funktionen einfacher zu machen, zu diesem Zeitpunkt ziemlich unelegant
+
+don_3=dfl_3[dfl_3$ID=="Don",]
+flo_3=dfl_3[dfl_3$ID=="Flo",]
+#gero_3=dfl_3[dfl_3$ID=="Gero",]
+marco_3=dfl_3[dfl_3$ID=="Marco",]
+toni_3=dfl_3[dfl_3$ID=="Toni",]
+#juergen_3=dfl_3[dfl_3$ID=="Juergen",] # < 30 spiele
+#frind_3=dfl_3[dfl_3$ID=="Frind",]
+#majo_3=dfl_3[dfl_3$ID=="Majo",] # < 30 spiele
+#domi_3=dfl_3[dfl_3$ID=="Domi",] # < 30 spiele
+#elias_3=dfl_3[dfl_3$ID=="Elias",] # < 30 spiele
+#tobi_3=dfl_3[dfl_3$ID=="Tobi",] # < 30 spiele
+
+don_3$cum_result=cumsum(don_3$result) # kummuliere sukzessive das Ergebnis
+don_3$count=c(1:(dim(don_3)[1])) # definiere Spalte mit "Rundenanzahl"
+don_3$loose_ratio=round(don_3$cum_result/don_3$count,3)*100 # berechne loose-ratio für jede Runde
+
+flo_3$cum_result=cumsum(flo_3$result) # kummuliere sukzessive das Ergebnis
+flo_3$count=c(1:(dim(flo_3)[1])) # definiere Spalte mit "Rundenanzahl"
+flo_3$loose_ratio=round(flo_3$cum_result/flo_3$count,3)*100 # berechne loose-ratio für jede Runde
+
+marco_3$cum_result=cumsum(marco_3$result) # kummuliere sukzessive das Ergebnis
+marco_3$count=c(1:(dim(marco_3)[1])) # definiere Spalte mit "Rundenanzahl"
+marco_3$loose_ratio=round(marco_3$cum_result/marco_3$count,3)*100 # berechne loose-ratio für jede Runde
+
+toni_3$cum_result=cumsum(toni_3$result) # kummuliere sukzessive das Ergebnis
+toni_3$count=c(1:(dim(toni_3)[1])) # definiere Spalte mit "Rundenanzahl"
+toni_3$loose_ratio=round(toni_3$cum_result/toni_3$count,3)*100 # berechne loose-ratio für jede Runde
+
+df_3=as.data.frame(rbind(don_3,flo_3,marco_3,toni_3))
+
+s=ggplot(df_3, aes(x=count, y=loose_ratio, color=ID))+
+  geom_line()+
+  ylab("loose-ratio %")+
+  geom_hline(yintercept = 33.3, linetype="dashed")+
+  theme_bw()+
+  theme(axis.title.x=element_blank())+
+  scale_y_continuous(limits=c(0,100),breaks=c(seq(0,100,by=10)))
+
+ggplotly(s)
+```
+
+
+
+
+# Draws
+
+```{r echo=F,   message=F, warning=F}
+draw=df[df$Don==2 | df$Flo==2 | df$Gero==2 | df$Marco==2 | df$Marco==2 | df$Frind==2 | df$Juergen==2 | df$Majo==2 | df$Domi==2 | df$Elias==2 | df$Tobi==2,]
+draw=draw[,-c(1,2,dim(draw)[2])] #lösche Datum, Runde, Gruppe Spalte
+draw$index=c(1:dim(draw)[1]) #kreeiere Index, damit man weiß, wer mit wem gedrawt hat
+draw_l <- gather(draw,ID,Ergebnis, Don:Tobi, factor_key=TRUE)
+draw_l=draw_l[draw_l$Ergebnis==2,] #lösche -9
+draw_l$Ergebnis=NULL #behalte nur Index und Namensspalte
+
+library("igraph")
+
+draw_l=draw_l[order(draw_l$index),] #ordne aufsteigend nach index zwecks lesbarkeit
+
+a=draw_l[seq(1, length(draw_l$index), 2),] # splitte Draw-Paar, allerdings weiß ich nicht genau was hier passiert
+b=draw_l[seq(0, length(draw_l$index), 2),]
+
+adj=data.frame("V1"=a$ID,"V2"=b$ID) #erzeuge Paar-Matrix 
+madj=get.adjacency(graph.edgelist(as.matrix(adj), directed=FALSE)) #erzeuge Adjakanz Matrix
+madj
+
+set.seed(12345)
+iadj=graph.adjacency(madj, mode = "lower", weighted = T)
+l <- layout_as_star(iadj)
+
+plot(iadj ,edge.label=E(iadj)$weight,
+     edge.width = 2,
+    margin =0,
+     asp=0.8,
+    vertex.size=25,
+    vertex.color="orange",layout=l)
+```
+
+
+# Totale Loose-ratio
+## Chronologischer Verlauf: Runden
+
+```{r echo=F, message=F, warning=F}
+dfl_marginal<- gather(df, ID, Ergebnis, Don:Tobi, factor_key=TRUE)
+dfl_marginal=dfl_marginal[dfl_marginal$Ergebnis != -9,] #lösche NA's da notwendig
+
+j=1
+while(j < dim(dfl_marginal)[1]+1){
+  if(dfl_marginal$Gruppe[j]==6 && dfl_marginal$Ergebnis[j]==1){dfl_marginal$result[j]=1.5}
+  else if(dfl_marginal$Gruppe[j]==5 && dfl_marginal$Ergebnis[j]==1){dfl_marginal$result[j]=1.25}
+  else if(dfl_marginal$Gruppe[j]==4 && dfl_marginal$Ergebnis[j]==1){dfl_marginal$result[j]=1}
+  else if(dfl_marginal$Gruppe[j]==3 && dfl_marginal$Ergebnis[j]==1){dfl_marginal$result[j]=0.75}
+  else{dfl_marginal$result[j]=0}
+  j=j+1
+}
+
+don=dfl_marginal[dfl_marginal$ID=="Don",]
+flo=dfl_marginal[dfl_marginal$ID=="Flo",]
+gero=dfl_marginal[dfl_marginal$ID=="Gero",]
+marco=dfl_marginal[dfl_marginal$ID=="Marco",]
+toni=dfl_marginal[dfl_marginal$ID=="Toni",]
+#juergen=dfl_marginal[dfl_marginal$ID=="Juergen",] # < 30 spiele
+frind=dfl_marginal[dfl_marginal$ID=="Frind",]
+#majo=dfl_marginal[dfl_marginal$ID=="Majo",] # < 30 spiele
+domi=dfl_marginal[dfl_marginal$ID=="Domi",] # < 30 spiele
+#elias=dfl_marginal[dfl_marginal$ID=="Elias",] # < 30 spiele
+#tobi=dfl_marginal[dfl_marginal$ID=="Tobi",] # < 30 spiele
+
+don$cum_result=cumsum(don$result) # kummuliere sukzessive das Ergebnis
+don$count=c(1:(dim(don)[1])) # definiere Spalte mit "Rundenanzahl"
+don$loose_ratio=round(don$cum_result/don$count,3)*100 # berechne loose-ratio für jede Runde
+
+flo$cum_result=cumsum(flo$result) # kummuliere sukzessive das Ergebnis
+flo$count=c(1:(dim(flo)[1])) # definiere Spalte mit "Rundenanzahl"
+flo$loose_ratio=round(flo$cum_result/flo$count,3)*100 # berechne loose-ratio für jede Runde
+
+gero$cum_result=cumsum(gero$result) # kummuliere sukzessive das Ergebnis
+gero$count=c(1:(dim(gero)[1])) # definiere Spalte mit "Rundenanzahl"
+gero$loose_ratio=round(gero$cum_result/gero$count,3)*100 # berechne loose-ratio für jede Runde
+
+marco$cum_result=cumsum(marco$result) # kummuliere sukzessive das Ergebnis
+marco$count=c(1:(dim(marco)[1])) # definiere Spalte mit "Rundenanzahl"
+marco$loose_ratio=round(marco$cum_result/marco$count,3)*100 # berechne loose-ratio für jede Runde
+
+toni$cum_result=cumsum(toni$result) # kummuliere sukzessive das Ergebnis
+toni$count=c(1:(dim(toni)[1])) # definiere Spalte mit "Rundenanzahl"
+toni$loose_ratio=round(toni$cum_result/toni$count,3)*100 # berechne loose-ratio für jede Runde
+
+frind$cum_result=cumsum(frind$result) # kummuliere sukzessive das Ergebnis
+frind$count=c(1:(dim(frind)[1])) # definiere Spalte mit "Rundenanzahl"
+frind$loose_ratio=round(frind$cum_result/frind$count,3)*100 # berechne loose-ratio für jede Runde
+
+domi$cum_result=cumsum(domi$result) # kummuliere sukzessive das Ergebnis
+domi$count=c(1:(dim(domi)[1])) # definiere Spalte mit "Rundenanzahl"
+domi$loose_ratio=round(domi$cum_result/domi$count,3)*100 # berechne loose-ratio für jede Runde
+
+df_marginal=as.data.frame(rbind(don, flo, gero, marco, toni, frind, domi))
+
+s=ggplot(df_marginal, aes(x=count, y=loose_ratio, color=ID))+
+  geom_line()+
+  ylab("Marginal loose-ratio %")+
+  geom_hline(yintercept = 25, linetype="dashed")+
+  theme_bw()+
+  theme(axis.title.x=element_blank())+
+  scale_y_continuous(limits=c(0,100),breaks=c(seq(0,100,by=10)))
+
+ggplotly(s)
+```
+
+## Chronologischer Verlauf: Datum
+
+```{r echo=F, message=F, warning=F}
+df_marginal_2=df_marginal[,c(1,4,6)] # behalte nur Datum, ID & result Variable, da ich pro Datum die loose-ratio berechnen will
+
+df_marginal_2 <- df_marginal_2 %>%
+   group_by(Datum, ID) %>% # lose-ratio soll nach Datum & ID berechnet werden
+   mutate(count = row_number()) %>% # zähle wie viele Spiele pro Datum pro ID stattgefunden haben
+   mutate(sum_result = cumsum(result)) %>% # kumuliere loses pro Datum pro ID
+   slice(tail(row_number(), 1)) %>% # behalte je Datum & ID nur letzte Beobachtung
+   mutate(lose_ratio = round(100*sum_result/count,2)) %>% # ermittle lose-ratio
+   select(-c(result, count,sum_result)) # behalte nur Datum, ID & lose-ratio
+
+df_marginal_2$date=as.POSIXct(df_marginal_2$Datum,format="%d.%m.")
+library(scales)
+
+p=ggplot(data=df_marginal_2,aes(x=date, y=lose_ratio, color=ID, group=ID))+
+  geom_point()+
+  geom_line()+
+  theme_bw()+
+  ylab("lose-ratio in %")
+
+ggplotly(p)
+
+# beachte, dass Wahrscheinlichkeiten von über 100% auftreten können da alles aufs 4er gewichtet ist!
+```
+
+
+# Spider Chart
+
+## Don
+
+```{r echo=F, message=F, warning=F}
+library(fmsb)
+df_draws_don=m[9:11,c(1,2)] #nur die Draws pro Spieler
+n_total_don=n_total[1:5,c(1,2)] # subset pro Spalte + nur die absolute Anzahl Runden (ohne ratios %)
+df_r_don=df_r[c(2,4,6,7),c(1,2)] # hier mit ratios %, gleiches Spiel wie oben
+r_total_don=data.frame("Lose_total"=don[dim(don)[1],dim(don)[2]])
+
+df_draws_don_radar=setNames(data.frame(t(df_draws_don[,-1])), df_draws_don[,1]) # transpose dataframe into the proper format
+n_total_don_radar=setNames(data.frame(t(n_total_don[,-1])), n_total_don[,1]) # transpose dataframe into the proper format
+df_r_don_radar=setNames(data.frame(t(df_r_don[,-1])), df_r_don[,1]) # transpose dataframe into the proper format
+
+df_draws_don_radar <- rbind(rep(10,dim(df_draws_don_radar)[2]) , rep(0,dim(df_draws_don_radar)[2]) , df_draws_don_radar) # add min & max values and scale ratios by 100 to depict %
+n_total_don_radar <- rbind(rep(1000,dim(n_total_don_radar)[2]) , rep(0,dim(n_total_don_radar)[2]) , n_total_don_radar) # add min & max values 
+df_r_don_radar <- rbind(rep(40,dim(df_r_don_radar)[2]) , rep(0,dim(df_r_don_radar)[2]) , df_r_don_radar*100) # add min & max values 
+r_total_don_radar <- rbind(40,0,r_total_don) # add min & max values 
+
+df_don_radar=cbind(df_draws_don_radar,n_total_don_radar,df_r_don_radar,r_total_don_radar) #horizontal verknüpfen
+df_don_radar=df_don_radar[,c(8,4:7,1:3,9:13)] #reorder columns
+colnames(df_don_radar)=c("N_Spiele_total","N_Spiele_3er","N_Spiele_4er","N_Spiele_5er","N_Spiele_6er","N_Draws_3er","N_Draws_4er","N_Draws_5er","%_Loses_3er","%_Loses_4er","%_Loses_5er","%_Loses_6er","%_Loses_total")
+
+radarchart( df_don_radar  , axistype=1 , 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+    #custom the grid
+    cglcol="grey", cglty=2, axislabcol="grey", cglwd=1,
+    #custom labels
+    vlcex=0.8)
+```
+
+
+
+## Flo
+
+```{r echo=F, message=F, warning=F}
+library(fmsb)
+df_draws_flo=m[9:11,c(1,3)] #nur die Draws pro Spieler
+n_total_flo=n_total[1:5,c(1,3)] # subset pro Spalte + nur die absolute Anzahl Runden (ohne ratios %)
+df_r_flo=df_r[c(2,4,6,7),c(1,3)] # hier mit ratios %, gleiches Spiel wie oben
+r_total_flo=data.frame("Lose_total"=flo[dim(flo)[1],dim(flo)[2]])
+
+df_draws_flo_radar=setNames(data.frame(t(df_draws_flo[,-1])), df_draws_flo[,1]) # transpose dataframe into the proper format
+n_total_flo_radar=setNames(data.frame(t(n_total_flo[,-1])), n_total_flo[,1]) # transpose dataframe into the proper format
+df_r_flo_radar=setNames(data.frame(t(df_r_flo[,-1])), df_r_flo[,1]) # transpose dataframe into the proper format
+
+df_draws_flo_radar <- rbind(rep(10,dim(df_draws_flo_radar)[2]) , rep(0,dim(df_draws_flo_radar)[2]) , df_draws_flo_radar) # add min & max values and scale ratios by 100 to depict %
+n_total_flo_radar <- rbind(rep(1000,dim(n_total_flo_radar)[2]) , rep(0,dim(n_total_flo_radar)[2]) , n_total_flo_radar) # add min & max values 
+df_r_flo_radar <- rbind(rep(40,dim(df_r_flo_radar)[2]) , rep(0,dim(df_r_flo_radar)[2]) , df_r_flo_radar*100) # add min & max values 
+r_total_flo_radar <- rbind(40,0,r_total_flo) # add min & max values 
+
+df_flo_radar=cbind(df_draws_flo_radar,n_total_flo_radar,df_r_flo_radar,r_total_flo_radar) #horizontal verknüpfen
+df_flo_radar=df_flo_radar[,c(8,4:7,1:3,9:13)] #reorder columns
+colnames(df_flo_radar)=c("N_Spiele_total","N_Spiele_3er","N_Spiele_4er","N_Spiele_5er","N_Spiele_6er","N_Draws_3er","N_Draws_4er","N_Draws_5er","%_Loses_3er","%_Loses_4er","%_Loses_5er","%_Loses_6er","%_Loses_total")
+
+radarchart( df_flo_radar  , axistype=1 , 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+    #custom the grid
+    cglcol="grey", cglty=2, axislabcol="grey", cglwd=1,
+    #custom labels
+    vlcex=0.8)
+```
+
+## Gero
+
+```{r echo=F, message=F, warning=F}
+library(fmsb)
+df_draws_gero=m[9:11,c(1,4)] #nur die Draws pro Spieler
+n_total_gero=n_total[1:5,c(1,4)] # subset pro Spalte + nur die absolute Anzahl Runden (ohne ratios %)
+df_r_gero=df_r[c(2,4,6,7),c(1,4)] # hier mit ratios %, gleiches Spiel wie oben
+r_total_gero=data.frame("Lose_total"=gero[dim(gero)[1],dim(gero)[2]])
+
+df_draws_gero_radar=setNames(data.frame(t(df_draws_gero[,-1])), df_draws_gero[,1]) # transpose dataframe into the proper format
+n_total_gero_radar=setNames(data.frame(t(n_total_gero[,-1])), n_total_gero[,1]) # transpose dataframe into the proper format
+df_r_gero_radar=setNames(data.frame(t(df_r_gero[,-1])), df_r_gero[,1]) # transpose dataframe into the proper format
+
+df_draws_gero_radar <- rbind(rep(10,dim(df_draws_gero_radar)[2]) , rep(0,dim(df_draws_gero_radar)[2]) , df_draws_gero_radar) # add min & max values and scale ratios by 100 to depict %
+n_total_gero_radar <- rbind(rep(1000,dim(n_total_gero_radar)[2]) , rep(0,dim(n_total_gero_radar)[2]) , n_total_gero_radar) # add min & max values 
+df_r_gero_radar <- rbind(rep(40,dim(df_r_gero_radar)[2]) , rep(0,dim(df_r_gero_radar)[2]) , df_r_gero_radar*100) # add min & max values 
+r_total_gero_radar <- rbind(40,0,r_total_gero) # add min & max values 
+
+df_gero_radar=cbind(df_draws_gero_radar,n_total_gero_radar,df_r_gero_radar,r_total_gero_radar) #horizontal verknüpfen
+df_gero_radar=df_gero_radar[,c(8,4:7,1:3,9:13)] #reorder columns
+colnames(df_gero_radar)=c("N_Spiele_total","N_Spiele_3er","N_Spiele_4er","N_Spiele_5er","N_Spiele_6er","N_Draws_3er","N_Draws_4er","N_Draws_5er","%_Loses_3er","%_Loses_4er","%_Loses_5er","%_Loses_6er","%_Loses_total")
+
+radarchart( df_gero_radar  , axistype=1 , 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+    #custom the grid
+    cglcol="grey", cglty=2, axislabcol="grey", cglwd=1,
+    #custom labels
+    vlcex=0.8)
+```
+
+
+## Marco
+
+```{r echo=F, message=F, warning=F}
+library(fmsb)
+df_draws_marco=m[9:11,c(1,5)] #nur die Draws pro Spieler
+n_total_marco=n_total[1:5,c(1,5)] # subset pro Spalte + nur die absolute Anzahl Runden (ohne ratios %)
+df_r_marco=df_r[c(2,4,6,7),c(1,5)] # hier mit ratios %, gleiches Spiel wie oben
+r_total_marco=data.frame("Lose_total"=marco[dim(marco)[1],dim(marco)[2]])
+
+df_draws_marco_radar=setNames(data.frame(t(df_draws_marco[,-1])), df_draws_marco[,1]) # transpose dataframe into the proper format
+n_total_marco_radar=setNames(data.frame(t(n_total_marco[,-1])), n_total_marco[,1]) # transpose dataframe into the proper format
+df_r_marco_radar=setNames(data.frame(t(df_r_marco[,-1])), df_r_marco[,1]) # transpose dataframe into the proper format
+
+df_draws_marco_radar <- rbind(rep(10,dim(df_draws_marco_radar)[2]) , rep(0,dim(df_draws_marco_radar)[2]) , df_draws_marco_radar) # add min & max values and scale ratios by 100 to depict %
+n_total_marco_radar <- rbind(rep(1000,dim(n_total_marco_radar)[2]) , rep(0,dim(n_total_marco_radar)[2]) , n_total_marco_radar) # add min & max values 
+df_r_marco_radar <- rbind(rep(40,dim(df_r_marco_radar)[2]) , rep(0,dim(df_r_marco_radar)[2]) , df_r_marco_radar*100) # add min & max values 
+r_total_marco_radar <- rbind(40,0,r_total_marco) # add min & max values 
+
+df_marco_radar=cbind(df_draws_marco_radar,n_total_marco_radar,df_r_marco_radar,r_total_marco_radar) #horizontal verknüpfen
+df_marco_radar=df_marco_radar[,c(8,4:7,1:3,9:13)] #reorder columns
+colnames(df_marco_radar)=c("N_Spiele_total","N_Spiele_3er","N_Spiele_4er","N_Spiele_5er","N_Spiele_6er","N_Draws_3er","N_Draws_4er","N_Draws_5er","%_Loses_3er","%_Loses_4er","%_Loses_5er","%_Loses_6er","%_Loses_total")
+
+radarchart( df_marco_radar  , axistype=1 , 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+    #custom the grid
+    cglcol="grey", cglty=2, axislabcol="grey", cglwd=1,
+    #custom labels
+    vlcex=0.8)
+```
+
+
+
+## Toni
+
+```{r echo=F, message=F, warning=F}
+library(fmsb)
+df_draws_toni=m[9:11,c(1,6)] #nur die Draws pro Spieler
+n_total_toni=n_total[1:5,c(1,6)] # subset pro Spalte + nur die absolute Anzahl Runden (ohne ratios %)
+df_r_toni=df_r[c(2,4,6,7),c(1,6)] # hier mit ratios %, gleiches Spiel wie oben
+r_total_toni=data.frame("Lose_total"=toni[dim(toni)[1],dim(toni)[2]])
+
+df_draws_toni_radar=setNames(data.frame(t(df_draws_toni[,-1])), df_draws_toni[,1]) # transpose dataframe into the proper format
+n_total_toni_radar=setNames(data.frame(t(n_total_toni[,-1])), n_total_toni[,1]) # transpose dataframe into the proper format
+df_r_toni_radar=setNames(data.frame(t(df_r_toni[,-1])), df_r_toni[,1]) # transpose dataframe into the proper format
+
+df_draws_toni_radar <- rbind(rep(10,dim(df_draws_toni_radar)[2]) , rep(0,dim(df_draws_toni_radar)[2]) , df_draws_toni_radar) # add min & max values and scale ratios by 100 to depict %
+n_total_toni_radar <- rbind(rep(1000,dim(n_total_toni_radar)[2]) , rep(0,dim(n_total_toni_radar)[2]) , n_total_toni_radar) # add min & max values 
+df_r_toni_radar <- rbind(rep(40,dim(df_r_toni_radar)[2]) , rep(0,dim(df_r_toni_radar)[2]) , df_r_toni_radar*100) # add min & max values 
+r_total_toni_radar <- rbind(40,0,r_total_toni) # add min & max values 
+
+df_toni_radar=cbind(df_draws_toni_radar,n_total_toni_radar,df_r_toni_radar,r_total_toni_radar) #horizontal verknüpfen
+df_toni_radar=df_toni_radar[,c(8,4:7,1:3,9:13)] #reorder columns
+colnames(df_toni_radar)=c("N_Spiele_total","N_Spiele_3er","N_Spiele_4er","N_Spiele_5er","N_Spiele_6er","N_Draws_3er","N_Draws_4er","N_Draws_5er","%_Loses_3er","%_Loses_4er","%_Loses_5er","%_Loses_6er","%_Loses_total")
+
+radarchart( df_toni_radar  , axistype=1 , 
+    #custom polygon
+    pcol=rgb(0.2,0.5,0.5,0.9) , pfcol=rgb(0.2,0.5,0.5,0.5) , plwd=4 , 
+    #custom the grid
+    cglcol="grey", cglty=2, axislabcol="grey", cglwd=1,
+    #custom labels
+    vlcex=0.8)
+```
+
+## All-in
+
+```{r echo=F}
+rownames(df_don_radar)[3]="Don" #assign name to observed row values
+rownames(df_flo_radar)[3]="Flo"
+rownames(df_gero_radar)[3]="Gero"
+rownames(df_marco_radar)[3]="Marco"
+rownames(df_toni_radar)[3]="Toni"
+
+df_radar <- rbind(c(rep(1000,5),rep(10,3),rep(40,5)) , rep(0,dim(df_don_radar)[2]) , df_don_radar[3,],df_flo_radar[3,],df_gero_radar[3,],df_marco_radar[3,],df_toni_radar[3,]) # keep only player specific rows and create new radar table
+ 
+# Color vector
+colors_border=c( rgb(0.1,0.1,0.1,1), rgb(0.5,0.8,0.8,1) , rgb(0.7,0.5,0.1,1),rgb(0.2,0.6,0.1,1),rgb(0.9,0.1,0.5,1) )
+colors_in=c( rgb(0.1,0.1,0.1,0.1), rgb(0.5,0.8,0.8,0.3) , rgb(0.7,0.5,0.1,0.2),rgb(0.2,0.6,0.1,0.2),rgb(0.9,0.1,0.5,0.2) )
+
+# plot with default options:
+radarchart( df_radar  , axistype=1 , 
+    #custom polygon
+    pcol=colors_border , pfcol=colors_in , plwd=1 , plty=1,
+    #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", caxislabels=seq(0,20,5), cglwd=0.8,
+    #custom labels
+    vlcex=0.8 
+    )
+
+# Add a legend
+legend(x=1.5, y=0.8, legend = rownames(df_radar[-c(1,2),]), bty = "n", pch=20 , col=colors_in , text.col = "black", cex=1.2, pt.cex=5)
+
+df_lose_ratios=df_radar[3:7,9:13]
+df_lose_ratios
+```
+
+
+
+# Summary: Loose-ratios
+
+```{r echo=F}
+library(data.table)
+setDT(df_lose_ratios, keep.rownames = TRUE)[] # mache aus rownames eine Spalte...
+colnames(df_lose_ratios)=c("ID","Loses_3er","Loses_4er","Loses_5er","Loses_6er","Loses_total") # und bennene diese um
+df_lose_ratios_t=setNames(data.frame(t(df_lose_ratios[,-1])), c("Don","Flo","Gero","Marco","Toni")) # transponiere
+df_lose_ratios_t$Type=c("Loses_3er","Loses_4er","Loses_5er","Loses_6er","Loses_total")
+
+df_lose_ratios_l <- gather(df_lose_ratios_t, ID, Ergebnis, Don:Toni, factor_key=TRUE) # konvertiere in long format um
+df_lose_ratios_l<-df_lose_ratios_l[!(df_lose_ratios_l$Type=="Loses_6er"),]
+
+ggplot(df_lose_ratios_l, aes(x = ID, y = Ergebnis, fill = Type, label = Ergebnis)) +
+  geom_bar(stat = "identity")+
+  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  theme_bw()+
+  coord_flip()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank(),axis.ticks.x = element_blank(), axis.text.x = element_blank())
+```
+

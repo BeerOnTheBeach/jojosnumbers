@@ -1,0 +1,82 @@
+---
+title: 'Ultimate: ZSS Solo Online Ranking'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r echo=F, warning=FALSE, message=FALSE}
+library(ggplot2)
+#library(plotly)
+#library(tidyr)
+#library(reshape)
+#library(reshape2)
+#library(plyr)
+#library(tidyverse)
+#library(dplyr)
+df=read.csv("ultimate.csv",sep=";",header=T)
+df$Runden=c(1:length(df$gps))
+df$gps=df$gps*1000
+df$mode=as.character(df$mode)
+#head(df)
+
+df$r=c(0)
+df$r[1]=1 #1=gewonnen 0=verloren
+i=1
+while(i<max(df$Runden)){
+  if(df$gps[i]>df$gps[i+1]){df$r[i+1]=0}else{df$r[i+1]=1}
+  i=i+1
+}
+
+#head(df)
+
+i=1
+while(i<max(df$Runden)+1){
+  if(df$mode[i]!="E"){df$mode[i]="N"}
+  i=i+1
+}
+
+df$cr=cumsum(df$r)
+df$winratio=df$cr/df$Runden
+df$mode=as.factor(df$mode)
+#df$mode =revalue(df$mode, c("E"="Elite","N"="Normal"))
+```
+
+## GPS Ranking (gemessen seit 3.4.20)
+
+```{r echo=F, warning=FALSE, message=FALSE, fig.width=10, fig.height=6}
+
+s=ggplot(df, aes(x=Runden, y=gps))+
+  geom_point(size=0.5,aes( color=mode))+
+  geom_line(aes(color=mode))+
+  theme_bw()+
+  scale_x_continuous(limits = c(0,max(df$Runden)), breaks = c(seq(0, max(df$Runden), by=50)))
+#ggplotly(s)
+s
+
+```
+
+```{r echo=F}
+s=ggplot(df, aes(x=mode,fill=mode))+
+  geom_bar()+
+  theme_bw()
+
+#ggplotly(s)
+s
+```
+
+
+## Win ratio %
+
+```{r echo=F, warning=FALSE, message=FALSE}
+s=ggplot(df, aes(x=Runden, y=winratio))+
+  #geom_point()+
+  geom_line(size=0.5, color="cyan")+
+  scale_y_continuous(limits = c(0,1))+
+  geom_hline(yintercept = 0.5, linetype="dashed")+
+  theme_bw()
+#ggplotly(s)
+s
+```
+
+
