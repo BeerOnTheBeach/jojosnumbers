@@ -29,7 +29,7 @@ library("plotly")
 # Datensatz laden & formatieren
 
 ```{r echo=F,  warning=F, message=F,warning=FALSE}
-df=read.csv("C:/Users/User/Desktop/Ordner/durak/durak.csv", sep=';', header = T)
+df=read.csv("durak.csv", sep=';', header = T)
 df=df[,1:14] 
 colnames(df)[c(1,2,14)]=c("Datum","Runde","Gruppe")
 
