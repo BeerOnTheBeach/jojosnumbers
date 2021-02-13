@@ -7,7 +7,7 @@ output:
 
 ```{r echo=F, warning=FALSE, message=FALSE}
 library(ggplot2)
-#library(plotly)
+library(plotly)
 #library(tidyr)
 #library(reshape)
 #library(reshape2)
@@ -51,8 +51,7 @@ s=ggplot(df, aes(x=Runden, y=gps))+
   geom_line(aes(color=mode))+
   theme_bw()+
   scale_x_continuous(limits = c(0,max(df$Runden)), breaks = c(seq(0, max(df$Runden), by=50)))
-#ggplotly(s)
-s
+ggplotly(s)
 
 ```
 
@@ -61,8 +60,8 @@ s=ggplot(df, aes(x=mode,fill=mode))+
   geom_bar()+
   theme_bw()
 
-#ggplotly(s)
-s
+ggplotly(s)
+
 ```
 
 
@@ -75,8 +74,8 @@ s=ggplot(df, aes(x=Runden, y=winratio))+
   scale_y_continuous(limits = c(0,1))+
   geom_hline(yintercept = 0.5, linetype="dashed")+
   theme_bw()
-#ggplotly(s)
-s
+ggplotly(s)
+
 ```
 
 
