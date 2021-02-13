@@ -5,6 +5,7 @@
     <title>Title</title>
 </head>
 <body>
-<h1>Durak Statistik</h1>
+<?php include 'src/snippets/header.php';
+?>
 </body>
 </html>

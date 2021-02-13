@@ -5,6 +5,7 @@
     <title>Title</title>
 </head>
 <body>
- <h1>Ultimate Statistik</h1>
+<?php include '/snippets/header.php';
+?>
 </body>
 </html>
