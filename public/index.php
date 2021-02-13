@@ -14,7 +14,7 @@
     <script src="src/js/jquery-3.5.1.min.js"></script>
     <script src="src/js/bootstrap.min.js"></script>
 
-    <link rel="icon" type="image/png" href="/public/src/images/favicon.jpg"/>
+    <link rel="icon" type="image/png" href="src/images/favicon.jpg"/>
 </head>
 <body>
 <?php include 'src/snippets/header.php';

@@ -1,6 +1,6 @@
 <nav class="navbar navbar-inverse">
     <a class="navbar-brand" href="index.php">
-        <img class="logo" alt="Logo" src="/jojosnumbers/public/src/images/logo.gif">
+        <img class="logo" alt="Logo" src="src/images/logo.gif">
     </a>
     <div class="container">
         <div class="navbar-header">
