@@ -3,5 +3,3 @@ AuthName "Dialog prompt"
 AuthType Basic
 AuthUserFile /var/www/jojosnumbers/.htpasswd
 Require valid-user
-Allow from 127.0.0.1
-Satisfy Any
