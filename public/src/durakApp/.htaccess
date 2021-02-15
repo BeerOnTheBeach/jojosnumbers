@@ -1,5 +1,7 @@
 #Protect Directory
-AuthName "Dialog prompt"
-AuthType Basic
-AuthUserFile /var/www/jojosnumbers/.htpasswd
-Require valid-user
+<If "req('Host') == 'www.beeronthebeach.de'">
+  AuthName "Dialog prompt"
+  AuthType Basic
+  AuthUserFile /var/www/jojosnumbers/.htpasswd
+  Require valid-user
+</If>
