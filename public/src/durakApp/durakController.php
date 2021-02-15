@@ -6,14 +6,15 @@ class durakController
     public $csvData;
     public $csvHtml;
     public $player;
-    public $playerButtons;
     public $gamesCount;
+    public $playerPresent;
 
     public function init() {
         $this->readCsv();
         $this->getPlayer();
-        $this->renderHtml();
+        $this->setPlayerPresent();
         $this->getGamesAmount();
+        $this->renderHtml();
     }
     public function readCsv() {
         $csv = array_map('str_getcsv', file('../statistics/durak/durak.csv'));
@@ -27,55 +28,126 @@ class durakController
     public function getPlayer() {
         $firstRow = explode(";", $this->csvData[0][0]);
         for ($i = 2; $i < count($firstRow);  $i++) {
-            $this->player[] = $firstRow[$i];
+            if ($firstRow[$i] != '') {
+                $this->player[] = $firstRow[$i];
+            }
         }
     }
     public function renderHtml() {
-        //Render CSV Table
+        //Render CSV table
         for ($i = count($this->csvData) - 10; $i < count($this->csvData);  $i++) {
             $row = explode(";", $this->csvData[$i][0]);
             $this->csvHtml .= "<tr>";
             foreach ($row as $key => $field) {
                 $hidden = '';
-                if($key > 6) $hidden = 'hidden';
-                $this->csvHtml .= "<td class='$hidden'>$field</td>";
+                $loss = '';
+                $draw = '';
+                if($key > count($this->playerPresent)+1) $hidden = 'hidden';
+                if($field == 1) $loss = 'text-danger';
+                if($field == 2) $draw = 'text-info';
+
+                $this->csvHtml .= "<td class='$hidden $loss $draw'>$field</td>";
             }
             $this->csvHtml .= "</tr>";
         }
-        //Render Player-Buttons
-        foreach ($this->player as $key => $player) {
-            $hidden = '';
-            if($key > 4) $hidden = 'hidden';
-            $this->playerButtons .= "<th class='$hidden'><button name='submitGame' value='$player' type=\"submit\" class=\"btn btn-primary\">$player</button></th>";
+    }
+    public function handleFormData() {
+        if(array_key_exists('submitGame', $_SESSION['postdata'])) {
+            $this->submitGame($_SESSION['postdata'], false);
+        } elseif(array_key_exists('deleteGame', $_SESSION['postdata'])) {
+            $this->deleteGame();
+        } elseif(array_key_exists('playerDraw', $_SESSION['postdata'])) {
+            $this->submitGame($_SESSION['postdata'], true);
+        } elseif(array_key_exists('playerPresent', $_SESSION['postdata'])) {
+            $_SESSION['playerPresent'] = $_SESSION['postdata']['playerPresent'];
+            $this->setPlayerPresent();
         }
     }
-
-    public function submitGame() {
-        //TODO: Make this work
-        return;
-        $name = $_POST["submitGame"];
+    public function submitGame($postData, $isDraw) {
         $file = fopen('../statistics/durak/durak.csv','a');
+        //Add game-number
+        $row[0] = date ("j.n");
+        //Add date
+        $this->gamesCount++;
+        $row[1] = $this->gamesCount;
+        foreach ($this->player as $key => $player) {
+            $found = false;
+            foreach ($this->playerPresent as $playerPresent) {
+                if ($playerPresent == $player) {
+                    if($isDraw) {
+                        //write row
+                        if($postData['playerDraw'][0] == $playerPresent || $postData['playerDraw'][1] == $playerPresent) {
+                            $row[] = "2";
+                        } else {
+                            $row[] = "0";
+                        }
+                    } else {
+                        if ($player == $postData['submitGame']) {
+                            $row[$key+2] = "1";
+                        } else {
+                            $row[$key+2] = "0";
+                        }
+                    }
+                    $found = true;
+                }
+            }
+            if (!$found) $row[$key+2] = '';
+        }
+        //Write to CSV
+        fputcsv($file, $row , ";");
+    }
+    public function deleteGame() {
+        $path = '../statistics/durak/durak.csv';
+
+        //Can't delete last game if not from today
+        $lastrow = end($this->csvData)[0];
+        $lastrow = explode(";", $lastrow);
+        if($lastrow[0] !== date ("j.n")) {
+            return;
+        }
+        //Delete last row
+        $this->trim_lines($path, 1);
+    }
+    public function trim_lines($path, $max) {
+        // Read the lines into an array
+        $lines = file($path);
+        // Setup counter for loop
+        $counter = 0;
+        while($counter < $max) {
+            // array_pop removes the last element from an array
+            array_pop($lines);
+            // Increment the counter
+            $counter++;
+        }  // End loop
+        // Write the trimmed lines to the file
+        file_put_contents($path, implode('', $lines));
+    }
+    public function submitDraw($postData) {
+        $loser = $postData['player-draw'];
+
+        $file = fopen('../statistics/durak/durak.csv','a');
+        //Add game-number
+        $row[0] = date("j.n");
+        //Add date
+        $this->gamesCount++;
+        $row[1] = $this->gamesCount;
         foreach ($this->player as $key => $col) {
-            //Add date
-            if ($key == 0) {
-                $row[] = date ("j.n");
-                continue;
-            }
-
-            //Add game-number
-            if ($key == 1) {
-                $row[] = $this->gamesCount++;
-                continue;
-            }
-
             //write row
-            if($col == $name) {
-                $row[] = "1";
+            if($loser[0] == $col || $loser[1] == $col) {
+                $row[] = "2";
             } else {
                 $row[] = "0";
             }
         }
         //Write to CSV
         fputcsv($file, $row , ";");
+    }
+    public function setPlayerPresent()
+    {
+        if(isset($_SESSION['playerPresent'])) {
+            $this->playerPresent = $_SESSION['playerPresent'];
+        } else {
+            $this->playerPresent = $this->player;
+        }
     }
 }
