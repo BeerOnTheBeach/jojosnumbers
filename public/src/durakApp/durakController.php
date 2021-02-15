@@ -122,26 +122,7 @@ class durakController
         // Write the trimmed lines to the file
         file_put_contents($path, implode('', $lines));
     }
-    public function submitDraw($postData) {
-        $loser = $postData['player-draw'];
 
-        $file = fopen('../statistics/durak/durak.csv','a');
-        //Add game-number
-        $row[0] = date("j.n");
-        //Add date
-        $this->gamesCount++;
-        $row[1] = $this->gamesCount;
-        foreach ($this->player as $key => $col) {
-            //write row
-            if($loser[0] == $col || $loser[1] == $col) {
-                $row[] = "2";
-            } else {
-                $row[] = "0";
-            }
-        }
-        //Write to CSV
-        fputcsv($file, $row , ";");
-    }
     public function setPlayerPresent()
     {
         if(isset($_SESSION['playerPresent'])) {
