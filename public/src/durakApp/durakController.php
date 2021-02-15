@@ -42,7 +42,7 @@ class durakController
                 $hidden = '';
                 $loss = '';
                 $draw = '';
-                if($key > count($this->playerPresent)+1) $hidden = 'hidden';
+                if($field == '') $hidden = 'hidden';
                 if($field == 1) $loss = 'text-danger';
                 if($field == 2) $draw = 'text-info';
 
@@ -83,15 +83,17 @@ class durakController
                         }
                     } else {
                         if ($player == $postData['submitGame']) {
-                            $row[$key+2] = "1";
+                            $row[] = "1";
                         } else {
-                            $row[$key+2] = "0";
+                            $row[] = "0";
                         }
                     }
                     $found = true;
                 }
             }
-            if (!$found) $row[$key+2] = '';
+            if (!$found) {
+                $row[] = '';
+            }
         }
         //Write to CSV
         fputcsv($file, $row , ";");

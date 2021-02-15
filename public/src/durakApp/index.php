@@ -81,7 +81,7 @@ $durakApp->init();
             </th>
         </tr>
         <?php
-        echo $durakApp->csvHtml;
+            echo $durakApp->csvHtml;
         ?>
     </table>
 </form>
