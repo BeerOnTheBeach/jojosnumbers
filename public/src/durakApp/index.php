@@ -31,7 +31,7 @@ $durakApp->init();
 
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="../css/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/durak.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="../js/jquery-3.5.1.min.js"></script>
