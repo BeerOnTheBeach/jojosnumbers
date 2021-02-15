@@ -39,6 +39,7 @@ $durakApp->init();
     <script src="durak.js"></script>
 </head>
 <body>
+<?php include '../snippets/header.php'; ?>
 <form method="post">
     <div class="col">
         <div onclick="showPlayerPresent()" id="btn-player-present" class="btn btn-warning">Player present</div>
