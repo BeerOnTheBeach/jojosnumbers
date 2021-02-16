@@ -1,0 +1,45 @@
+---
+title: "Stock trading analysis"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+## Introduction
+
+The following section depicts the performing of my stock portfolio.  Of course, content ist to be added, yet. 
+
+```{r echo=F, message=F, warning=F}
+library(DT) # for html table
+library(ggplot2)
+library(plotly)
+```
+
+
+
+## Basics
+
+First things first, let's start with the portion of stocks in my portfolio. 
+
+
+```{r echo=F}
+df=read.csv("./stock_truncated.csv", head=T, stringsAsFactors = F,sep="," , na.strings=c("","NA"))
+df[,-c(1,2)] <-round(df[,-c(1,2)],1) #the "-1" excludes column 1
+df=df[-nrow(df),]
+#df=df[df$type!="ETF",]
+```
+
+
+```{r echo=F}
+#test=df
+library(scales)
+
+ggplot(df, mapping = aes(x = reorder(brand, share),y=share))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),axis.title.y = element_blank())+
+  coord_flip()
+
+```
+
