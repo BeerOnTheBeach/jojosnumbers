@@ -6,12 +6,9 @@ output:
   html_document:
     toc: yes
     toc_float: yes
+    includes:
+        in_header: ../../snippets/header.html
 ---
-<<insertHTML:[header.html]
-
-```{r, echo=FALSE}
-htmltools::includeHTML("header.html")
-```
 
 # R Pakete laden
 
