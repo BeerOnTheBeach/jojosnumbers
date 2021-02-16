@@ -7,7 +7,7 @@ output:
     toc: yes
     toc_float: yes
     includes:
-        in_header: ../../snippets/header.html
+        in_header: header.html
 ---
 
 # R Pakete laden
