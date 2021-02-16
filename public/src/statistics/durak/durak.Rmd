@@ -7,6 +7,11 @@ output:
     toc: yes
     toc_float: yes
 ---
+<<insertHTML:[header.html]
+
+```{r, echo=FALSE}
+htmltools::includeHTML("header.html")
+```
 
 # R Pakete laden
 
