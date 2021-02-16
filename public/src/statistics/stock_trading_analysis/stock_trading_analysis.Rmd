@@ -1,0 +1,6 @@
+---
+title: "Stock trading analysis"
+output: html_document
+---
+
+The following section depicts the performing of my stock portfolio. Of course, content ist to be added, yet. 
