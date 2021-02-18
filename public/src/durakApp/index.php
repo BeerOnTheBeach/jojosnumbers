@@ -41,7 +41,8 @@ $durakApp->init();
 </head>
 <body>
 <?php include '../snippets/header.php'; ?>
-<form method="post">
+<div class="container-fluid durak-app-container">
+<form class="form form-player-present" method="post">
     <label class="label label-warning" for="player-present">Player present: </label>
     <select class="selectpicker" name="playerPresent[]" id="player-present" multiple>
         <?php
@@ -51,6 +52,7 @@ $durakApp->init();
         ?>
     </select>
     <button id="btn-draw-submit" class="btn btn-warning">Submit</button>
+    <a id="btn-draw-download-csv" class="btn btn-success" href="\src\statistics\durak\durak.csv">Download csv</a>
 </form>
 <form method="post">
     <table class='table table-hover'>
@@ -84,5 +86,6 @@ $durakApp->init();
         ?>
     </table>
 </form>
+</div>
 </body>
 </html>

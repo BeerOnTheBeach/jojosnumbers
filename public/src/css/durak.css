@@ -7,3 +7,10 @@ body {
     background: linear-gradient(to right, #e8cbc0, #636fa4);
     min-height: 100vh;
 }
+.durak-app-container {
+    margin-top: 50px;
+}
+
+#btn-draw-download-csv {
+    float: right;
+}
