@@ -1,12 +1,15 @@
 <?php
-require_once '../../../vendor/autoload.php';
+
+namespace Jojosnumbers\src;
 
 // Option
+use AlphaVantage\Client;
+
 $option = new AlphaVantage\Options();
 $option->setApiKey('DFO0621J5JWADO97');
 
 // Client
-$client = new AlphaVantage\Client($option);
+$client = new Client($option);
 $dailyXaiomi =$client->timeseries()->dailyAdjusted("XIACF")["Time Series (Daily)"];
 
 $symbole = ["XIACF", "AAPL", "SNE"];
