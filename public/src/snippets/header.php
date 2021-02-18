@@ -7,9 +7,10 @@
     <div class="container">
         <div class="navbar-header">
             <ul class="nav navbar-nav">
-                <li><a href="/src/statistics/durak/durak.php">Durak <span class="sr-only">(current)</span></a></li>
-                <li><a href="/src/statistics/ultimate/ultimate.html">Smäsh <span class="sr-only">(current)</span></a></li>
-                <li><a href="/src/durakApp/index.php">Durak App <span class="sr-only">(current)</span></a></li>
+                <li><a href="/src/statistics/durak/durak.php">Durak<span class="sr-only">(current)</span></a></li>
+                <li><a href="/src/statistics/ultimate/ultimate.html">Smäsh<span class="sr-only">(current)</span></a></li>
+                <li><a href="/src/durakApp/index.php">Durak App<span class="sr-only">(current)</span></a></li>
+                <li><a href="/src/pokemon-randomizer/public/index.php">Pokemon Randomizer<span class="sr-only">(current)</span></a></li>
             </ul>
         </div>
     </div>
