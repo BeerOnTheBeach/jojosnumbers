@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../css/durak.css">
+<link rel="stylesheet" href="../css/durakApp.css">
 
 <div class="navbar navbar-inverse" role="navigation">
     <div class="container">

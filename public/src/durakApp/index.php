@@ -21,7 +21,7 @@ $durakApp->init();
 ?>
 
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -42,40 +42,40 @@ $durakApp->init();
 <body>
 <?php include '../snippets/header.php'; ?>
 <div class="container-fluid durak-app-container">
-<form class="form form-player-present" method="post">
-    <label class="label label-warning" for="player-present">Player present: </label>
-    <select class="selectpicker" name="playerPresent[]" id="player-present" multiple>
-        <?php
-        foreach ($durakApp->player as $key => $player) {
-            echo "<option name='playerPresent' value='$player'>$player</option>";
-        }
-        ?>
-    </select>
-    <button id="btn-draw-submit" class="btn btn-warning">Submit</button>
-    <a id="btn-draw-download-csv" class="btn btn-success" href="\src\statistics\durak\durak.csv">Download csv</a>
-</form>
 <form method="post">
-    <table class='table table-hover'>
-        <tr>
-            <th>Datum</th>
-            <th>Anzahl</th>
-            <?php
-            //Render player-buttons
-            foreach ($durakApp->player as $key => $player) {
-                $btnClass = '';
-                foreach ($durakApp->playerPresent as $playerPresent) {
-                    if($player == $playerPresent) {
-                        $btnClass = "btn-primary'";
-                        break;
-                    } else {
-                        $btnClass = "btn-secondary' disabled";
+    <div class="col-md-9">
+        <h2 class="text-center">Letzten 10 Loses</h2>
+        <table class='table table-hover'>
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Anzahl</th>
+                <?php
+                //Render player-buttons
+                foreach ($durakApp->player as $key => $player) {
+                    $btnClass = '';
+                    foreach ($durakApp->playerPresent as $playerPresent) {
+                        if($player == $playerPresent) {
+                            $btnClass = "btn-primary'";
+                            break;
+                        } else {
+                            $btnClass = "btn-secondary' disabled";
+                        }
                     }
+                    echo "<th class=''><button title='Lose für diesen Spieler eintragen' type='submit' class='btn-player btn $btnClass name='submitGame' value='$player'>$player</button></th>";
                 }
-                echo "<th class=''><button type='submit' class='btn-player btn $btnClass name='submitGame' value='$player'>$player</button></th>";
-            }
-            ?>
-            <th>
-                <select class="selectpicker" name="playerDraw[]" id="player-draw" multiple>
+                ?>
+            </tr>
+        </thead>
+        <?php
+            echo $durakApp->csvHtml;
+        ?>
+    </table>
+    </div>
+        <div class="col-md-3">
+            <h2>Einstellungen</h2>
+            <div class="settings-item">
+                <select title="Unentschiedene wählen" class="selectpicker" name="playerDraw[]" id="player-draw" multiple>
                     <?php
                     //Render player-multiselect fpr draw
                     foreach ($durakApp->playerPresent as $key => $player) {
@@ -83,17 +83,27 @@ $durakApp->init();
                     }
                     ?>
                 </select>
-                <button id="btn-draw-submit" class="btn btn-warning">Submit Draw</button>
-            </th>
-
-            <th>
+                <button title="Unentschieden bestätigen" id="btn-draw-submit" class="btn btn-warning">Bestätigen</button>
+            </div>
+            <div class="settings-item">
+                <select title="Anwesende Spieler wählen" class="selectpicker" name="playerPresent[]" id="player-present" multiple>
+                    <?php
+                    foreach ($durakApp->player as $key => $player) {
+                        echo "<option name='playerPresent' value='$player'>$player</option>";
+                    }
+                    ?>
+                </select>
+            <button title="Anwesenheit bestätigen" id="btn-draw-present" class="btn btn-info">Bestätigen</button>
+            </div>
+            <div class="settings-item">
+                <a id="btn-draw-download-csv" class="btn btn-success" href="\src\statistics\durak\durak.csv">Download csv</a>
                 <button id="btn-delete" class="btn btn-danger" name="deleteGame">Delete last</button>
-            </th>
-        </tr>
-        <?php
-            echo $durakApp->csvHtml;
-        ?>
-    </table>
+            </div>
+            <div class="settings-item">
+                <h4>Letztes Spiel:</h4>
+                <span class="badge"><?php echo $durakApp->timeLastGameSubmitted ?></span>
+            </div>
+        </div>
 </form>
 </div>
 </body>

@@ -8,6 +8,7 @@ class durakController
     public $player;
     public $gamesCount;
     public $playerPresent;
+    public $timeLastGameSubmitted;
 
     public function init() {
         $this->readCsv();
@@ -15,6 +16,9 @@ class durakController
         $this->setPlayerPresent();
         $this->getGamesAmount();
         $this->renderHtml();
+        if(array_key_exists('timestamp', $_SESSION['postdata'])) {
+            $this->timeLastGameSubmitted = $_SESSION['postdata']['timestamp'];
+        }
     }
     public function readCsv() {
         $csv = array_map('str_getcsv', file('../statistics/durak/durak.csv'));
@@ -97,6 +101,9 @@ class durakController
         }
         //Write to CSV
         fputcsv($file, $row , ";");
+
+        //set timestamp
+        $_SESSION['postdata']['timestamp'] = date("l m.y\ H:i:s");
     }
     public function deleteGame() {
         $path = '../statistics/durak/durak.csv';
