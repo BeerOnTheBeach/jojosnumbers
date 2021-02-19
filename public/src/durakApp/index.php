@@ -61,8 +61,17 @@ $durakApp->init();
             <th>Anzahl</th>
             <?php
             //Render player-buttons
-            foreach ($durakApp->playerPresent as $key => $player) {
-                echo "<th class=''><button type='submit' class='btn-player btn btn-primary' name='submitGame' value='$player'>$player</button></th>";
+            foreach ($durakApp->player as $key => $player) {
+                $btnClass = '';
+                foreach ($durakApp->playerPresent as $playerPresent) {
+                    if($player == $playerPresent) {
+                        $btnClass = "btn-primary'";
+                        break;
+                    } else {
+                        $btnClass = "btn-secondary' disabled";
+                    }
+                }
+                echo "<th class=''><button type='submit' class='btn-player btn $btnClass name='submitGame' value='$player'>$player</button></th>";
             }
             ?>
             <th>

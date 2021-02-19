@@ -42,7 +42,7 @@ class durakController
                 $hidden = '';
                 $loss = '';
                 $draw = '';
-                if($field == '') $hidden = 'hidden';
+                if($field == '') $field = ' ';
                 if($field == 1) $loss = 'text-danger';
                 if($field == 2) $draw = 'text-info';
 
