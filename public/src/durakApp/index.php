@@ -45,6 +45,15 @@ $durakApp->init();
 <form method="post">
     <div class="col-md-9">
         <h2 class="text-center">Letzten 10 Loses</h2>
+        <select title="Unentschiedene wählen" class="selectpicker" name="playerDraw[]" id="player-draw" multiple>
+            <?php
+            //Render player-multiselect fpr draw
+            foreach ($durakApp->playerPresent as $key => $player) {
+                echo "<option name='submitDraw' value='$player'>$player</option>";
+            }
+            ?>
+        </select>
+        <button title="Unentschieden bestätigen" id="btn-draw-submit" class="btn btn-warning">Bestätigen</button>
         <table class='table table-hover'>
         <thead>
             <tr>
@@ -74,17 +83,6 @@ $durakApp->init();
     </div>
         <div class="col-md-3">
             <h2>Einstellungen</h2>
-            <div class="settings-item">
-                <select title="Unentschiedene wählen" class="selectpicker" name="playerDraw[]" id="player-draw" multiple>
-                    <?php
-                    //Render player-multiselect fpr draw
-                    foreach ($durakApp->playerPresent as $key => $player) {
-                        echo "<option name='submitDraw' value='$player'>$player</option>";
-                    }
-                    ?>
-                </select>
-                <button title="Unentschieden bestätigen" id="btn-draw-submit" class="btn btn-warning">Bestätigen</button>
-            </div>
             <div class="settings-item">
                 <select title="Anwesende Spieler wählen" class="selectpicker" name="playerPresent[]" id="player-present" multiple>
                     <?php
