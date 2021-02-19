@@ -103,7 +103,7 @@ class durakController
         fputcsv($file, $row , ";");
 
         //set timestamp
-        $_SESSION['postdata']['timestamp'] = date("l m.y\ H:i:s");
+        $_SESSION['postdata']['timestamp'] = date("l d.m.y\ H:i:s");
     }
     public function deleteGame() {
         $path = '../statistics/durak/durak.csv';
