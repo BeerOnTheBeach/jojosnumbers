@@ -22,7 +22,6 @@ class durakController
         if($_SESSION != null && array_key_exists('timestamp', $_SESSION)) {
             $this->timeLastGameSubmitted = $_SESSION['timestamp'];
         }
-        $_SESSION['amountHidden'] = 100;
     }
     public function readCsv() {
         $csv = array_map('str_getcsv', file('../statistics/durak/durak.csv'));
@@ -81,7 +80,11 @@ class durakController
         }
     }
     public function setAmountHidden() {
-        $this->amountHidden = $_SESSION['amountHidden'];
+        if(isset($_SESSION['amountHidden'])) {
+            $this->amountHidden = $_SESSION['amountHidden'];
+        } else {
+            $this->amountHidden = 100;
+        }
     }
     public function submitGame($postData, $isDraw) {
         $file = fopen('../statistics/durak/durak.csv','a');
