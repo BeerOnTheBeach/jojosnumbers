@@ -17,6 +17,7 @@
                 <li><a href="/src/statistics/durak/durak.php">Durak</a></li>
                 <li><a href="/src/statistics/ultimate/ultimate.html">Smäsh</a></li>
                 <li><a href="/src/durakApp/index.php">Durak App</a></li>
+                <li><a href="/src/durakapp/public/index.php">Durak-App v2</a></li>
 
             </ul>
             <ul class="nav navbar-nav navbar-right">

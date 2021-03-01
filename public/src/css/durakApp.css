@@ -29,7 +29,7 @@ body {
     font-weight: bold;
 }
 
-@media only screen and (max-width: 700px) {
+@media only screen and (max-width: 767px) {
    .navbar-collapse {
        margin-top: 5rem;
    }
