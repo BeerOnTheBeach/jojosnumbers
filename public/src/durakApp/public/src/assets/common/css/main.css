@@ -1,0 +1,90 @@
+.player-container {
+  overflow: auto;
+  white-space: nowrap;
+  height: 150px;
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+}
+.player-container .player {
+  margin: 16px;
+  display: inline-block;
+  cursor: grab;
+  border-radius: 50% 50% 5% 5%;
+}
+.player-container .player:hover {
+  background-color: #dbdbdb;
+}
+.player-container .player.currentlyPlaying {
+  opacity: 0.5;
+  cursor: default;
+  background-color: unset;
+}
+.player-container .player .player-avatar {
+  height: 75px;
+}
+
+.game-table-container {
+  margin: 40px auto 40px auto;
+  width: 300px;
+}
+.game-table-container .game-table {
+  height: 240px;
+  width: 300px;
+  border: 2px solid black;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 16px;
+}
+.game-table-container .game-table .player-playing {
+  margin: 10px;
+  cursor: grab;
+  height: 100px;
+  border-radius: 50% 50% 5% 5%;
+}
+.game-table-container .game-table .player-playing:hover {
+  background-color: #dbdbdb;
+}
+.game-table-container .game-table .player-playing:active {
+  cursor: grabbing !important;
+}
+.game-table-container .game-table .player-playing .player-avatar {
+  height: 75px;
+}
+.game-table-container .game-table .chair {
+  height: 75px;
+  width: 75px;
+  margin: 10px;
+  border: 2px solid black;
+  display: none;
+  background-color: lightgray;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+}
+.game-table-container .game-table .chair.chair-empty, .game-table-container .game-table .chair.player-playing {
+  display: flex;
+}
+
+.games-container {
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+  overflow: auto;
+  height: 210px;
+}
+.games-container .game {
+  margin: 15px;
+  display: inline-block;
+  border: 2px solid;
+  padding: 4px;
+}
+.games-container .game .game-player {
+  display: inline-block;
+  margin-right: 8px;
+}
+.games-container .game .game-player .game-loser-name {
+  display: inline-block;
+}
+
+/*# sourceMappingURL=main.css.map */
