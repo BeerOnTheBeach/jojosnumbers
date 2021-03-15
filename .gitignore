@@ -2,6 +2,7 @@
 /public/src/statistics/ultimate/ultimate.html
 /public/src/statistics/durak/durak.csv
 .idea
+<<<<<<< HEAD
 
 /public/src/statistics/stock_trading_analysis/stock_trading_analysis.rmd
 /public/src/statistics/stock_trading_analysis/Orderübersicht.csv
@@ -24,3 +25,6 @@
 /public/src/statistics/stock_trading_analysis/Depot_22022021.csv
 /public/src/statistics/stock_trading_analysis/Depot_23022021.csv
 /public/src/statistics/stock_trading_analysis/Depot_25022021.csv
+=======
+/vendor/
+>>>>>>> 0ec0e2ce6f26254430a2e15e7ce592975d8979d5

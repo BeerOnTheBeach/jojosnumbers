@@ -1,0 +1,36 @@
+.logo {
+    height: 75px;
+}
+body {
+    background: #636fa4;
+    background: -webkit-linear-gradient(to right, #636fa4, #afafaf);
+    background: linear-gradient(to right, #636fa4, #afafaf);
+    min-height: 100vh;
+}
+.durak-app-container {
+    margin-top: 50px;
+}
+
+.big-bold {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.table-hover>tbody>tr:hover {
+    background-color: #ffffff;
+}
+
+.settings-item {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.settings-header {
+    font-weight: bold;
+}
+
+@media only screen and (max-width: 767px) {
+   .navbar-collapse {
+       margin-top: 5rem;
+   }
+}

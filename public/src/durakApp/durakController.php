@@ -8,13 +8,20 @@ class durakController
     public $player;
     public $gamesCount;
     public $playerPresent;
+    public $timeLastGameSubmitted;
+    public $amountHidden;
+    public $efaGettho = ["Gero", "Don", "Toni", "Flo", "Marco"];
 
     public function init() {
         $this->readCsv();
         $this->getPlayer();
         $this->setPlayerPresent();
+        $this->setAmountHidden();
         $this->getGamesAmount();
-        $this->renderHtml();
+        $this->renderTable();
+        if($_SESSION != null && array_key_exists('timestamp', $_SESSION)) {
+            $this->timeLastGameSubmitted = $_SESSION['timestamp'];
+        }
     }
     public function readCsv() {
         $csv = array_map('str_getcsv', file('../statistics/durak/durak.csv'));
@@ -33,20 +40,20 @@ class durakController
             }
         }
     }
-    public function renderHtml() {
+    public function renderTable() {
         //Render CSV table
         for ($i = count($this->csvData) - 10; $i < count($this->csvData);  $i++) {
             $row = explode(";", $this->csvData[$i][0]);
             $this->csvHtml .= "<tr>";
-            foreach ($row as $key => $field) {
+            for ($j = 0; $j < count($row); $j++) {
                 $hidden = '';
                 $loss = '';
                 $draw = '';
-                if($field == '') $hidden = 'hidden';
-                if($field == 1) $loss = 'text-danger';
-                if($field == 2) $draw = 'text-info';
-
-                $this->csvHtml .= "<td class='$hidden $loss $draw'>$field</td>";
+                if($row[$j] == '') $row[$j] = ' ';
+                if($j >= $this->amountHidden + 2) break;
+                if($row[$j] == 1) $loss = 'text-danger big-bold';
+                if($row[$j] == 2) $draw = 'text-info big-bold';
+                $this->csvHtml .= "<td class='$loss $draw'>$row[$j]</td>";
             }
             $this->csvHtml .= "</tr>";
         }
@@ -61,6 +68,22 @@ class durakController
         } elseif(array_key_exists('playerPresent', $_SESSION['postdata'])) {
             $_SESSION['playerPresent'] = $_SESSION['postdata']['playerPresent'];
             $this->setPlayerPresent();
+        } elseif(array_key_exists('amountHidden', $_SESSION['postdata'])) {
+            $_SESSION['amountHidden'] = $_SESSION['postdata']['amountHidden'];
+            if($_SESSION['amountHidden'] != '100') {
+                $_SESSION['playerPresent'] = $this->efaGettho;
+                $this->setPlayerPresent();
+            } else {
+                $_SESSION['playerPresent'] = $this->player;
+            }
+            $this->setAmountHidden();
+        }
+    }
+    public function setAmountHidden() {
+        if(isset($_SESSION['amountHidden'])) {
+            $this->amountHidden = $_SESSION['amountHidden'];
+        } else {
+            $this->amountHidden = 100;
         }
     }
     public function submitGame($postData, $isDraw) {
@@ -97,6 +120,9 @@ class durakController
         }
         //Write to CSV
         fputcsv($file, $row , ";");
+
+        //set timestamp
+        $_SESSION['timestamp'] .= "<div>Nr. " . $this->gamesCount . ": " . date("l d.m.y\ H:i:s") . "</div>";
     }
     public function deleteGame() {
         $path = '../statistics/durak/durak.csv';
