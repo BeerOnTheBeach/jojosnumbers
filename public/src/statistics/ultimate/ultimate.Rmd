@@ -1,8 +1,11 @@
 ---
 title: 'Ultimate: ZSS Solo Online Ranking'
 output:
-  html_document: default
-  pdf_document: default
+  html_document:
+    toc: yes
+    toc_float: yes
+    includes:
+        in_header: header.html
 ---
 
 ```{r echo=F, warning=FALSE, message=FALSE}
