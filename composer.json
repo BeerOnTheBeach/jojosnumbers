@@ -1,5 +1,6 @@
 {
     "require": {
-        "kokspflanze/alpha-vantage-api": "^0.9.0"
+        "kokspflanze/alpha-vantage-api": "^0.9.0",
+      "ext-curl": "*"
     }
 }

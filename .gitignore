@@ -2,29 +2,9 @@
 /public/src/statistics/ultimate/ultimate.html
 /public/src/statistics/durak/durak.csv
 .idea
-<<<<<<< HEAD
 
-/public/src/statistics/stock_trading_analysis/stock_trading_analysis.rmd
-/public/src/statistics/stock_trading_analysis/Orderübersicht.csv
-/public/src/statistics/stock_trading_analysis/Dividende_2021.csv
-/public/src/statistics/stock_trading_analysis/Abgeschlossene_Geschäfte.csv
-/public/src/statistics/stock_trading_analysis/Depot_01032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_02032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_03032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_04032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_05032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_08032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_09032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_10032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_11032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_12032021.csv
-/public/src/statistics/stock_trading_analysis/Depot_16022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_17022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_18022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_19022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_22022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_23022021.csv
-/public/src/statistics/stock_trading_analysis/Depot_25022021.csv
-=======
+/public/src/statistics/stock_trading_analysis/
+!public/src/statistics/stock_trading_analysis/stock_trading_analysis.html
+!public/src/statistics/stock_trading_analysis/stock_trading_analysis.Rmd
+
 /vendor/
->>>>>>> 0ec0e2ce6f26254430a2e15e7ce592975d8979d5
