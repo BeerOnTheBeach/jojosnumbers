@@ -17,11 +17,11 @@
                 <li><a href="/src/statistics/durak/durak.php">Durak</a></li>
                 <li><a href="/src/statistics/ultimate/ultimate.html">Smäsh</a></li>
                 <li><a href="/src/durakApp/index.php">Durak App</a></li>
-                <li><a href="app.jojosnubers.com" target="_blank">Durak-App v2</a></li>
+                <li><a href="http://app.jojosnumbers.com" target="_blank">Durak-App v2</a></li>
 
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a style="padding-bottom: 10px; padding-top: 10px" href="beeronthebeach.de" target="_blank"><img src="/src/images/pichu-icon.png"></a></li>
+                <li><a style="padding-bottom: 10px; padding-top: 10px" href="http://beeronthebeach.de" target="_blank"><img src="/src/images/pichu-icon.png"></a></li>
             </ul>
         </div>
     </div>
