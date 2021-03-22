@@ -17,11 +17,11 @@
                 <li><a href="/src/statistics/durak/durak.php">Durak</a></li>
                 <li><a href="/src/statistics/ultimate/ultimate.html">Smäsh</a></li>
                 <li><a href="/src/durakApp/index.php">Durak App</a></li>
-                <li><a href="/src/durakapp/public/index.php">Durak-App v2</a></li>
+                <li><a href="app.jojosnubers.com" target="_blank">Durak-App v2</a></li>
 
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a style="padding-bottom: 10px; padding-top: 10px" href="/src/pokemon-randomizer/public/index.php"><img src="\src\pokemon-randomizer\public\src\images\pichu-icon.png"></a></li>
+                <li><a style="padding-bottom: 10px; padding-top: 10px" href="beeronthebeach.de" target="_blank"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/172.png"></a></li>
             </ul>
         </div>
     </div>
