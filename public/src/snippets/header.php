@@ -21,7 +21,7 @@
 
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a style="padding-bottom: 10px; padding-top: 10px" href="beeronthebeach.de" target="_blank"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/172.png"></a></li>
+                <li><a style="padding-bottom: 10px; padding-top: 10px" href="beeronthebeach.de" target="_blank"><img src="/src/images/pichu-icon.png"></a></li>
             </ul>
         </div>
     </div>
